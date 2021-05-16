@@ -4,14 +4,14 @@ from datetime import datetime
 from requests import exceptions
 import logging
 
-from monitor import SawalonNamebaseMonitor
-from watchDog import DogManager
+from monitor import NamebaseMonitor
+from sawalonwatchdog import DogManager
 
 if __name__ == '__main__':
-    logging.basicConfig(filename='name_monitor.log', format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
+    logging.basicConfig(filename='./logs/trader_monitor.log', format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
                         level=logging.DEBUG)
 
-    monitor = SawalonNamebaseMonitor()
+    monitor = NamebaseMonitor()
 
     dog = DogManager("traders.json")
     dog.register_cb(monitor.reload_json)

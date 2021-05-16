@@ -6,10 +6,11 @@ from datetime import datetime
 from requests import exceptions
 import logging
 import csv
+from dd_notification import NotificationManager
 
-class SawalonNamebaseMonitor():
+
+class NamebaseMonitor():
     __monitor_session = requests.Session()
-    __dingding_session = requests.Session()
 
     def __init__(self):
         self.sells = []
@@ -49,52 +50,9 @@ class SawalonNamebaseMonitor():
             logging.info(self.buys)
             logging.info('******↑↑↑ reload sells & buys ↑↑↑******')
 
-    def __dd_message_common(self, message):
-        webhook = "https://oapi.dingtalk.com/robot/send?access_token" \
-                  "=7c7869c5ec3ac506ef5bcae2c2e1044439742c8d86c4197d4715c41511b2c018 "
-        header = {
-            "Content-Type": "application/json",
-            "Charset": "UTF-8"
-        }
-        message_json = json.dumps(message)
-        info = self.__dingding_session.post(url=webhook, data=message_json, headers=header)
-        logging.info(info.text)
-        pass
-
-    def dd_message_at(self, text):
-        message = {
-            "msgtype": "text",
-            "text": {
-                "content": text
-            },
-            "at": {
-                "atMobiles": [
-                    "13107935242"
-                ],
-                "isAtAll": False
-            }
-        }
-        self.__dd_message_common(message)
-        pass
-
-    def dingmessage(self, text):
-        message = {
-
-            "msgtype": "text",
-            "text": {
-                "content": text
-            },
-            "at": {
-                "isAtAll": False
-            }
-
-        }
-        self.__dd_message_common(message)
-        pass
-
-    def triger_log_price(self) -> None:
+    def trigger_log_price(self) -> None:
         self.should_log = True
-        logging.info('triger_log_price')
+        logging.info('trigger_log_price')
         pass
 
     def get_hns_price(self):
@@ -113,11 +71,10 @@ class SawalonNamebaseMonitor():
                 price = resp_json.get('price')
                 if self.should_log:
                     message = self.__get_time() + "\n" + " HNS current price:" + str(price)
-
-                    self.dingmessage(message)
+                    NotificationManager().message_normal(message)
                     self.should_log = False
                     with open(r'prices.csv', 'a', encoding='utf-8') as f:
-                        #date price
+                        # date price
                         writer = csv.writer(f)
                         writer.writerow([self.__get_time(), price])
                 sell_price = 9999
@@ -132,12 +89,12 @@ class SawalonNamebaseMonitor():
                     message = self.__get_time() + "\n" + "HNS sell trigger " + str(sell_price) + ' now price is' + str(
                         price)
                     self.sells.remove(sell_price)
-                    self.dd_message_at(message)
+                    NotificationManager().message_at_subscribers(message)
                 if float(price) <= float(buy_price):
                     message = self.__get_time() + "\n" + "HNS buy trigger " + str(buy_price) + ' now price is' + str(
                         price)
                     self.buys.remove(buy_price)
-                    self.dd_message_at(message)
+                    NotificationManager().message_at_subscribers(message)
                 logging.info('******↓↓↓ current sells & buys ↓↓↓******')
                 logging.info(self.sells)
                 logging.info(self.buys)
@@ -145,34 +102,33 @@ class SawalonNamebaseMonitor():
             else:
                 logging.warning('response code %d' % response.status_code)
                 message = self.__get_time() + "\n" + 'HNS exception:' + str(response.status_code)
-                self.dingmessage(message)
+                NotificationManager().message_normal(message)
         except exceptions.Timeout as e:
             logging.warning('Exception TIMEOUT')
             message = self.__get_time() + "\n" + 'HNS exception:' + str(e)
-            self.dingmessage(message)
+            NotificationManager().message_normal(message)
         except exceptions.HTTPError as e:
             logging.warning('Exception HTTPSERVER')
             message = self.__get_time() + "\n" + 'HNS exception:' + str(e)
-            self.dingmessage(message)
-
+            NotificationManager().message_normal(message)
         logging.info('↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ END REQ %s↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑' % (self.__get_time()))
 
 
 if __name__ == '__main__':
-    logging.basicConfig(filename='nameMonitor.log', format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
-                        level=logging.INFO)
-    monitor = SawalonNamebaseMonitor()
+    logging.basicConfig(filename='./logs/nameMonitor.log', format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
+                        level=logging.DEBUG)
+    monitor = NamebaseMonitor()
     monitor.get_hns_price()
-    monitor.dingmessage('HNS 小助手上班啦！')
+    NotificationManager().message_normal('HNS 小助手上班啦！')
     schedule.every(10).seconds.do(monitor.get_hns_price)
-    schedule.every(5).seconds.do(monitor.triger_log_price)
+    schedule.every(5).seconds.do(monitor.trigger_log_price)
     while True:
         try:
             schedule.run_pending()
             time.sleep(1)
         except (KeyboardInterrupt, SystemExit):
             logging.critical('Exception Graceful shutdown of Baleen ingestion service.')
-            monitor.dd_message_at('HNS 小助手下线啦！\n Graceful shutdown of Baleen ingestion service.')
+            NotificationManager().message_at_all('HNS 小助手下线啦！\n Graceful shutdown of Baleen ingestion service.')
         except Exception as e:
             logging.critical('Exception %s' % (str(e)))
-            monitor.dd_message_at('HNS 小助手下线啦！\n %s' % (str(e)))
+            NotificationManager().message_at_all('HNS 小助手下线啦！\n %s' % (str(e)))

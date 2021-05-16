@@ -4,33 +4,33 @@ import logging
 
 
 class DDNotification:
-    __dingding_session = requests.Session()
+    __notification_session = requests.Session()
     __mobile_subscribers = ""
+    __notification_url = "https://oapi.dingtalk.com/robot/send?access_token" \
+                         "=7c7869c5ec3ac506ef5bcae2c2e1044439742c8d86c4197d4715c41511b2c018"
 
     def __init__(self):
+        logging.info("DDNotification init")
         with open('subscribers.json', 'r') as f:
             notifier_json_string = f.read()
-            logging.info('dd_message_notification reload notifications json %s' % notifier_json_string)
             self.__mobile_subscribers = json.loads(notifier_json_string)
         pass
 
-    def send_message(self, message):
-        webhook = "https://oapi.dingtalk.com/robot/send?access_token" \
-                  "=7c7869c5ec3ac506ef5bcae2c2e1044439742c8d86c4197d4715c41511b2c018"
+    def __send_message(self, message):
         header = {
             "Content-Type": "application/json",
             "Charset": "UTF-8"
         }
         message_json = json.dumps(message)
-        info = self.__dingding_session.post(url=webhook, data=message_json, headers=header)
+        info = self.__notification_session.post(url=self.__notification_url, data=message_json, headers=header)
         logging.info(info.text)
         pass
 
-    def dd_message_at_subsribers(self, text):
+    def dd_message_at_subscribers(self, text):
         message_dic = {"msgtype": "text", "text": {
             "content": text
         }, "at": self.__mobile_subscribers}
-        self.send_message(message_dic)
+        self.__send_message(message_dic)
         pass
 
     def dd_message_normal(self, text):
@@ -43,7 +43,7 @@ class DDNotification:
                 "isAtAll": "False"
             }
         }
-        self.send_message(message)
+        self.__send_message(message)
         pass
 
     def dd_message_at_all(self, text):
@@ -56,14 +56,53 @@ class DDNotification:
                 "isAtAll": "True"
             }
         }
-        self.send_message(message)
+        self.__send_message(message)
+        pass
+
+
+def singleton(class_):
+    instances = {}
+
+    def inner(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+
+    return inner
+
+
+@singleton
+class NotificationManager(object):
+    notification = DDNotification()
+
+    def __init__(self):
+        pass
+
+    def message_normal(self, message):
+        logging.debug(message)
+        self.notification.dd_message_normal(message)
+        pass
+
+    def message_at_subscribers(self, message):
+        logging.debug(message)
+        self.notification.dd_message_at_subscribers(message)
+        pass
+
+    def message_at_all(self, message):
+        logging.debug(message)
+        self.notification.dd_message_at_all(message)
         pass
 
 
 if __name__ == '__main__':
-    logging.basicConfig(filename='dd_message.log', format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
-                        level=logging.DEBUG)
-    dd_message_notification = DDNotification()
-    # dd_message_notification.dd_message_at_subsribers("HNS dd_message test")
-    dd_message_notification.dd_message_at_all("HNS dd_message test")
-    dd_message_notification.dd_message_normal("HNS hahah")
+    logging.basicConfig(filename='./logs/notification.log', format='%(asctime)s %(message)s',
+                        datefmt='%m/%d/%Y %I:%M:%S %p',
+                        level=logging.INFO)
+    # logging.debug("hello dd_notification debug")
+    # logging.info("hello dd_notification info")
+    notificationManager = NotificationManager()
+    notificationManager1 = NotificationManager()
+    NotificationManager().message_at_subscribers("HNS helll")
+    # notificationManager.message_at_subscribers("HNS dd_message test")
+    # notificationManager.message_at_all("HNS dd_message test")
+    notificationManager.message_normal("HNS hello")
