@@ -1,25 +1,25 @@
+import logging
+from monitor import TraderMonitor
+from trader_watchdog import DogManager
+from dd_notification import NotificationManager
 import time
 import schedule
 from datetime import datetime
-from requests import exceptions
-import logging
 
-from monitor import NamebaseMonitor
-from sawalonwatchdog import DogManager
-from dd_notification import NotificationManager
 if __name__ == '__main__':
-    logging.basicConfig(filename='./logs/trader_monitor.log', format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
+    log_file = './logs_monitor/trader.log'
+    logging.basicConfig(filename=log_file,
+                        format='%(asctime)s %(message)s',
+                        datefmt='%m/%d/%Y %I:%M:%S %p',
                         level=logging.DEBUG)
-
-    monitor = NamebaseMonitor()
-
-    dog = DogManager("traders.json")
+    monitor = TraderMonitor()
+    dog = DogManager()
+    dog.schedule(filename="traders.json", monitor_path="./data_monitor/")
     dog.register_cb(monitor.reload_json)
     dog.start_watch()
-
-    monitor.get_hns_price()
-    NotificationManager().message_normal('HNS 小助手上班啦！')
-
+    now = datetime.now()
+    message = now.strftime("%d/%m/%Y %H:%M:%S") + "\nHNS 小助手上班啦！"
+    NotificationManager().message_normal(message)
     schedule.every(10).seconds.do(monitor.get_hns_price)
     schedule.every().hour.do(monitor.trigger_log_price)
     try:

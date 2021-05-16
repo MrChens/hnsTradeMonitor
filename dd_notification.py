@@ -10,8 +10,7 @@ class DDNotification:
                          "=7c7869c5ec3ac506ef5bcae2c2e1044439742c8d86c4197d4715c41511b2c018"
 
     def __init__(self):
-        logging.info("DDNotification init")
-        with open('subscribers.json', 'r') as f:
+        with open('./data_monitor/subscribers.json', 'r') as f:
             notifier_json_string = f.read()
             self.__mobile_subscribers = json.loads(notifier_json_string)
         pass
@@ -62,7 +61,6 @@ class DDNotification:
 
 def singleton(class_):
     instances = {}
-
     def inner(*args, **kwargs):
         if class_ not in instances:
             instances[class_] = class_(*args, **kwargs)
@@ -79,30 +77,27 @@ class NotificationManager(object):
         pass
 
     def message_normal(self, message):
-        logging.debug(message)
         self.notification.dd_message_normal(message)
         pass
 
     def message_at_subscribers(self, message):
-        logging.debug(message)
         self.notification.dd_message_at_subscribers(message)
         pass
 
     def message_at_all(self, message):
-        logging.debug(message)
         self.notification.dd_message_at_all(message)
         pass
 
 
 if __name__ == '__main__':
-    logging.basicConfig(filename='./logs/notification.log', format='%(asctime)s %(message)s',
+    logging.basicConfig(filename='./logs_monitor/notification.log', format='%(asctime)s %(message)s',
                         datefmt='%m/%d/%Y %I:%M:%S %p',
                         level=logging.INFO)
-    # logging.debug("hello dd_notification debug")
-    # logging.info("hello dd_notification info")
+    logging.debug("hello dd_notification debug")
+    logging.info("hello dd_notification info")
     notificationManager = NotificationManager()
     notificationManager1 = NotificationManager()
-    NotificationManager().message_at_subscribers("HNS helll")
-    # notificationManager.message_at_subscribers("HNS dd_message test")
-    # notificationManager.message_at_all("HNS dd_message test")
+    NotificationManager().message_at_subscribers("HNS hallo")
+    notificationManager.message_at_subscribers("HNS dd_message test")
+    notificationManager.message_at_all("HNS dd_message test")
     notificationManager.message_normal("HNS hello")

@@ -9,7 +9,7 @@ import csv
 from dd_notification import NotificationManager
 
 
-class NamebaseMonitor():
+class TraderMonitor:
     __monitor_session = requests.Session()
 
     def __init__(self):
@@ -25,7 +25,7 @@ class NamebaseMonitor():
         return format_date
 
     def reload_json(self):
-        with open('traders.json', 'r') as f:
+        with open('./data_monitor/traders.json', 'r') as f:
             monitor_json_string = f.read()
             logging.info('monitor reload price json %s' % monitor_json_string)
             price_json = json.loads(monitor_json_string)
@@ -52,6 +52,7 @@ class NamebaseMonitor():
 
     def trigger_log_price(self) -> None:
         self.should_log = True
+        print("trigger_log_price")
         logging.info('trigger_log_price')
         pass
 
@@ -67,13 +68,13 @@ class NamebaseMonitor():
             response.raise_for_status()
             if response.status_code == 200:
                 resp_json = json.loads(response.text)
-                logging.info('namebase response:%s' % resp_json)
+                logging.info('name_base_pro response:%s' % resp_json)
                 price = resp_json.get('price')
                 if self.should_log:
                     message = self.__get_time() + "\n" + " HNS current price:" + str(price)
                     NotificationManager().message_normal(message)
                     self.should_log = False
-                    with open(r'prices.csv', 'a', encoding='utf-8') as f:
+                    with open(r'./collect_data_monitor/prices.csv', 'a', encoding='utf-8') as f:
                         # date price
                         writer = csv.writer(f)
                         writer.writerow([self.__get_time(), price])
@@ -103,21 +104,28 @@ class NamebaseMonitor():
                 logging.warning('response code %d' % response.status_code)
                 message = self.__get_time() + "\n" + 'HNS exception:' + str(response.status_code)
                 NotificationManager().message_normal(message)
-        except exceptions.Timeout as e:
+        except exceptions.Timeout as http_exceptions:
             logging.warning('Exception TIMEOUT')
-            message = self.__get_time() + "\n" + 'HNS exception:' + str(e)
+            message = self.__get_time() + "\n" + 'HNS exception:' + str(http_exceptions)
             NotificationManager().message_normal(message)
-        except exceptions.HTTPError as e:
+        except exceptions.HTTPError as http_exceptions:
             logging.warning('Exception HTTPSERVER')
-            message = self.__get_time() + "\n" + 'HNS exception:' + str(e)
+            message = self.__get_time() + "\n" + 'HNS exception:' + str(http_exceptions)
             NotificationManager().message_normal(message)
         logging.info('↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ END REQ %s↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑' % (self.__get_time()))
 
 
 if __name__ == '__main__':
-    logging.basicConfig(filename='./logs/nameMonitor.log', format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
-                        level=logging.DEBUG)
-    monitor = NamebaseMonitor()
+    log_file = './logs_monitor/nameMonitor.log'
+    if log_file is not None:
+        filemode_val = 'w'
+    else:
+        filemode_val = 'a'
+    logging.basicConfig(filename=log_file,
+                        format='%(asctime)s %(message)s',
+                        datefmt='%m/%d/%Y %I:%M:%S %p',
+                        level=logging.DEBUG, filemode=filemode_val)
+    monitor = TraderMonitor()
     monitor.get_hns_price()
     NotificationManager().message_normal('HNS 小助手上班啦！')
     schedule.every(10).seconds.do(monitor.get_hns_price)

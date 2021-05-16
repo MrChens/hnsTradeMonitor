@@ -6,24 +6,20 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 
-def nothing():
-    print("nothing")
-    pass
-
-
 class DogHandler(FileSystemEventHandler):
     def __init__(self):
+        print("Dog handler init")
         pass
 
     def on_modified(self, event):
-        # print(f"event type: {event.event_type} path :{event.src_path} modified")
+        logging.info(f"on_modified: {event.event_type} path :{event.src_path} modified")
         paths = event.src_path.rsplit("/", 1)
         dog_manager = DogManager()
         for index in range(len(paths)):
             if dog_manager.watch_file_name == paths[index]:
                 print(paths[index])
                 file = paths[index]
-                dog_manager.triger_cb(file)
+                dog_manager.trigger_cb(file)
         pass
 
     def on_closed(self, event):
@@ -53,14 +49,18 @@ def singleton(class_):
 @singleton
 class DogManager(object):
     dog = Observer()
-    path = '.'
     dog_handler = DogHandler()
     watch_file_name = ""
 
-    def __init__(self, filename):
-        logging.info("DogManager __init__")
-        self.dog.schedule(event_handler=self.dog_handler, path=self.path, recursive=True)
+    def __init__(self):
+        print("DogManager init call..........")
+        pass
+
+    def schedule(self, filename, monitor_path):
+        logging.info("DogManager schedule filename:%s" % filename)
+        print("DogManager schedule filename:%s" % filename)
         self.watch_file_name = filename
+        self.dog.schedule(event_handler=self.dog_handler, path=monitor_path, recursive=True)
         pass
 
     def register_cb(self, func):
@@ -68,8 +68,9 @@ class DogManager(object):
         self.dog_handler = func
         pass
 
-    def triger_cb(self, file_name: Any) -> None:
-        logging.info("dog triger_cb find file name:%s" % file_name)
+    def trigger_cb(self, file_name: Any) -> None:
+        logging.info("dog trigger_cb find file name:%s" % file_name)
+        print("trigger file: %s" % file_name)
         self.dog_handler()
         pass
 
@@ -79,7 +80,7 @@ class DogManager(object):
         pass
 
     def stop(self):
-        logging.info("dog stoped")
+        logging.info("dog stopped")
         self.dog.stop()
         pass
 
@@ -91,11 +92,14 @@ class DogManager(object):
 
 if __name__ == '__main__':
     def call_back():
-        print("xxxxx")
+        print("call back test")
         pass
 
-
-    dog = DogManager("traders.json")
+    logging.basicConfig(filename='./logs_monitor/watchdog.log', format='%(asctime)s %(message)s',
+                        datefmt='%m/%d/%Y %I:%M:%S %p',
+                        level=logging.DEBUG)
+    dog = DogManager()
+    dog.schedule(filename="traders.json", monitor_path="./data_monitor/")
     dog.register_cb(call_back)
     dog.start_watch()
 
