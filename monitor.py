@@ -24,6 +24,12 @@ class TraderMonitor:
         format_date = now.strftime("%d/%m/%Y %H:%M:%S")
         return format_date
 
+    def __update_trader_reload(self):
+        with open('./data_monitor/traders_reload.json', 'w') as f:
+            traders_dic = {"buys": self.buys, "sells": self.sells}
+            traders_json = json.dumps(traders_dic)
+            f.write(traders_json)
+
     def reload_json(self):
         with open('./data_monitor/traders.json', 'r') as f:
             monitor_json_string = f.read()
@@ -49,6 +55,7 @@ class TraderMonitor:
             logging.info(self.sells)
             logging.info(self.buys)
             logging.info('******↑↑↑ reload sells & buys ↑↑↑******')
+        self.__update_trader_reload()
 
     def trigger_log_price(self) -> None:
         self.should_log = True
@@ -90,11 +97,13 @@ class TraderMonitor:
                     message = self.__get_time() + "\n" + "HNS sell trigger " + str(sell_price) + ' now price is' + str(
                         price)
                     self.sells.remove(sell_price)
+                    self.__update_trader_reload()
                     NotificationManager().message_at_subscribers(message)
                 if float(price) <= float(buy_price):
                     message = self.__get_time() + "\n" + "HNS buy trigger " + str(buy_price) + ' now price is' + str(
                         price)
                     self.buys.remove(buy_price)
+                    self.__update_trader_reload()
                     NotificationManager().message_at_subscribers(message)
                 logging.info('******↓↓↓ current sells & buys ↓↓↓******')
                 logging.info(self.sells)

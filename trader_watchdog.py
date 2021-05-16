@@ -12,7 +12,7 @@ class DogHandler(FileSystemEventHandler):
         pass
 
     def on_modified(self, event):
-        logging.info(f"on_modified: {event.event_type} path :{event.src_path} modified")
+        logging.info("~~~~~~~~~~~~~~~~~~~~~~~~~file change~~~~~~~~~~~~~~~~~~~~~~~~~")
         paths = event.src_path.rsplit("/", 1)
         dog_manager = DogManager()
         for index in range(len(paths)):
