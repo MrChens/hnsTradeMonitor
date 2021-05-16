@@ -7,9 +7,6 @@ from requests import exceptions
 import logging
 import csv
 
-
-
-
 class SawalonNamebaseMonitor():
     __monitor_session = requests.Session()
     __dingding_session = requests.Session()

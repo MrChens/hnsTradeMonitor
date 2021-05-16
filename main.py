@@ -9,7 +9,7 @@ from watchDog import DogManager
 
 if __name__ == '__main__':
     logging.basicConfig(filename='name_monitor.log', format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p',
-                        level=logging.INFO)
+                        level=logging.DEBUG)
 
     monitor = SawalonNamebaseMonitor()
 
@@ -28,9 +28,9 @@ if __name__ == '__main__':
             time.sleep(1)
     except (KeyboardInterrupt, SystemExit):
         dog.stop()
+        dog.join()
         logging.info('Exception Graceful shutdown of Baleen ingestion service.')
         monitor.dd_message_at('HNS 小助手下线啦！\n Graceful shutdown of Baleen ingestion service.')
     except Exception as e:
         logging.info('Exception %s' % (str(e)))
         monitor.dd_message_at('HNS 小助手下线啦！\n %s' % (str(e)))
-    dog.join()
