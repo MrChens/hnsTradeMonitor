@@ -27,10 +27,13 @@ if __name__ == '__main__':
             schedule.run_pending()
             time.sleep(1)
     except (KeyboardInterrupt, SystemExit):
-        dog.stop()
-        dog.join()
         logging.info('Exception Graceful shutdown of Baleen ingestion service.')
         NotificationManager().message_at_all('HNS 小助手下线啦！\n Graceful shutdown of Baleen ingestion service.')
+        dog.stop()
+        dog.join()
     except Exception as e:
         logging.info('Exception %s' % (str(e)))
         NotificationManager().message_at_all('HNS 小助手下线啦！\n %s' % (str(e)))
+#        dog.stop()
+#        dog.join()
+#        dog.start_watch()

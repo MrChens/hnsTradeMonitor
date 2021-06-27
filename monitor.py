@@ -115,11 +115,15 @@ class TraderMonitor:
                 NotificationManager().message_normal(message)
         except exceptions.Timeout as http_exceptions:
             logging.warning('Exception TIMEOUT')
-            message = self.__get_time() + "\n" + 'HNS exception:' + str(http_exceptions)
+            message = self.__get_time() + "\n" + 'HNS Timeout:' + str(http_exceptions)
             NotificationManager().message_normal(message)
         except exceptions.HTTPError as http_exceptions:
-            logging.warning('Exception HTTPSERVER')
-            message = self.__get_time() + "\n" + 'HNS exception:' + str(http_exceptions)
+            logging.warning('Exception HTTPError')
+            message = self.__get_time() + "\n" + 'HNS HTTPError:' + str(http_exceptions)
+            NotificationManager().message_normal(message)
+        except exceptions.RequestException as req_exceptions:
+            logging.warning('Exception RequestException')
+            message = self.__get_time() + "\n" + 'HNS RequestException:' + str(req_exceptions)
             NotificationManager().message_normal(message)
         logging.info('↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ END REQ %s↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑' % (self.__get_time()))
 
